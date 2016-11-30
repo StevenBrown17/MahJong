@@ -16,6 +16,7 @@ public class MahJong extends JFrame implements MouseListener{
 
 	//Image img = Toolkit.getDefaultToolkit().createImage("src/resources/dragon_bg.png");
 	
+	public MahJongBoard.MahJongModel.Tile t1=null,t2=null;
 	
 	public MahJong() {
 		
@@ -23,12 +24,51 @@ public class MahJong extends JFrame implements MouseListener{
 
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
-		setSize(1200,800);
+
 		
+		
+		
+		setSize(1200,900);
+		JMenuBar menu = new JMenuBar();
+		JMenu file = new JMenu("File");
+		menu.add(file);
+		JMenuItem exit = new JMenuItem("Exit");
+		//exit.addActionListener((ActionListener) this);
+		file.add(exit);
+		
+		JMenu control = new JMenu("Control");
+		menu.add(control);
+		
+		JMenuItem newGame = new JMenuItem("New Game", 'N');
+		control.add(newGame);
+		newGame.setAccelerator(KeyStroke.getKeyStroke("ctrl N"));
+		newGame.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				getContentPane().removeAll();
+				newGame();
+				add(new MahJongBoard());
+				revalidate();
+				repaint();
+			}
+		});
+		
+		JMenuItem undo = new JMenuItem("Undo", 'U');
+		control.add(undo);	
+		undo.setAccelerator(KeyStroke.getKeyStroke("ctrl U"));
+		undo.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				try{
+					undoMove();
+				}catch(ArrayIndexOutOfBoundsException ex){System.out.println("no moves to undo");}
+			}
+		});
 		
 
 		
+		setJMenuBar(menu);
+		
 		add(new MahJongBoard());
+
 		
 		//pack();	
 	
@@ -40,36 +80,72 @@ public class MahJong extends JFrame implements MouseListener{
 		setLocation((int)(screenSize.getWidth()-getWidth())/2, (int)(screenSize.getHeight() - getHeight())/2);
 		
 		setVisible(true);
+		
+	}//end constructor
+
+	
+	public void undoMove(){
+		int size = MahJongBoard.removedList.size(), index;
+		
+		index = MahJongBoard.removedList.get(size-1).getListIndex();
+		MahJongBoard.obList.get(index).setVisible(true);
+		MahJongBoard.removedList.remove(size-1);
+		
 	}
-
-
+	
+	public static void newGame(){
+		MahJongBoard.addAndShuffle();
+	}
+	
 	public void mouseReleased(MouseEvent e) {}
 	public void mouseClicked(MouseEvent e) {}
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
-
 	public void mousePressed(MouseEvent e){
 		
 		MahJongBoard.MahJongModel.Tile t = (MahJongBoard.MahJongModel.Tile)e.getSource();
 		
+		if(!t.matches(t1))
+			t1=t;
+		
+			t2=t;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
 		//System.out.println("Tile Visible: "+ t.tileVisible);
 		
+		if(t1.matches(t2)){
+			t1.setTileVisible(false);//local tile var
+			t2.setTileVisible(false);//local tile var
+			t1.setVisible(false);
+			t2.setVisible(false);
+			System.out.println(t);
+			System.out.println("List Index: " + t.listIndex+"\n");
+			//System.out.println("Tile Visible: "+ t.tileVisible);	
+			MahJongBoard.removedList.add(t);
+			repaint();
+			t1=null;
+			t2=null;
+		}
 		
 		
-		t.setTileVisible(false);//local tile var
-		t.setVisible(false);
-		System.out.println(t);
-		System.out.println("List Index: " + t.listIndex+"\n");
-		//System.out.println("Tile Visible: "+ t.tileVisible);	
-		MahJongBoard.removedList.add(t);
-		
-	}
+	}//end mouse pressed
 	
 
 	
 		public static void main(String[] args){			
 			
 			new MahJong();
+			
+			
+			
 			
 		}//end main
 		
@@ -78,46 +154,49 @@ public class MahJong extends JFrame implements MouseListener{
 	
 	public static class MahJongBoard extends JPanel{
 		
+		static String[] seasons={"Spring","Summer","Fall","Winter"}; //one instance
+		static String[] flowers={"Chrysanthemum", "Orchid", "Plum", "Bamboo"}; //one instance
+		static int[] circles={1,2,3,4,5,6,7,8,9,
+					   1,2,3,4,5,6,7,8,9,
+					   1,2,3,4,5,6,7,8,9,
+					   1,2,3,4,5,6,7,8,9}; //four instances
+		static char[] characters={'1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
+							 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
+							 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
+							 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F'}; //four instances
+		static int[] bamboo = {2,3,4,5,6,7,8,9,
+						2,3,4,5,6,7,8,9,
+						2,3,4,5,6,7,8,9,
+						2,3,4,5,6,7,8,9};//four instances
 		
 		
 		
 		public static ObservableList<MahJongModel.Tile> obList = FXCollections.observableArrayList();
 		public static ObservableList<MahJongModel.Tile> removedList = FXCollections.observableArrayList();
 		
+		public static void addAndShuffle(){
+			obList.clear();
+			removedList.clear();
+			
+			for(int i=0; i<seasons.length;i++){obList.add(new SeasonTile(seasons[i]));}//adding tile objects to observable list
+			for(int i=0; i<flowers.length;i++){obList.add(new FlowerTile(flowers[i]));}
+			for(int i=0; i<circles.length;i++){obList.add(new CircleTile(circles[i]));}
+			for(int i=0; i<characters.length;i++){obList.add(new CharacterTile(characters[i]));}
+			for(int i=0; i<bamboo.length;i++){obList.add(new BambooTile(bamboo[i]));}
+			for(int i=0;i<4;i++){obList.add(new Bamboo1Tile()); obList.add(new WhiteDragonTile());}
 		
+			Collections.shuffle(obList);
+		}
 		
 		public MahJongBoard() {	
-			
-			
 			
 					setLayout(null);
 										
 									
-					String[] seasons={"Spring","Summer","Fall","Winter"}; //one instance
-					String[] flowers={"Chrysanthemum", "Orchid", "Plum", "Bamboo"}; //one instance
-					int[] circles={1,2,3,4,5,6,7,8,9,
-								   1,2,3,4,5,6,7,8,9,
-								   1,2,3,4,5,6,7,8,9,
-								   1,2,3,4,5,6,7,8,9}; //four instances
-					char[] characters={'1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
-										 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
-										 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F',
-										 '1','2','3','4','5','6','7','8','9','N','E','W','S','C','F'}; //four instances
-					int[] bamboo = {2,3,4,5,6,7,8,9,
-									2,3,4,5,6,7,8,9,
-									2,3,4,5,6,7,8,9,
-									2,3,4,5,6,7,8,9};//four instances
-
-					for(int i=0; i<seasons.length;i++){obList.add(new SeasonTile(seasons[i]));}//adding tile objects to observable list
-					for(int i=0; i<flowers.length;i++){obList.add(new FlowerTile(flowers[i]));}
-					for(int i=0; i<circles.length;i++){obList.add(new CircleTile(circles[i]));}
-					for(int i=0; i<characters.length;i++){obList.add(new CharacterTile(characters[i]));}
-					for(int i=0; i<bamboo.length;i++){obList.add(new BambooTile(bamboo[i]));}
-					for(int i=0;i<4;i++){obList.add(new Bamboo1Tile()); obList.add(new WhiteDragonTile());}
+					addAndShuffle();
 					
-					 //MahJongBoard.MahJongModel.Tile t = new SeasonTile("Summer");
-
-					Collections.shuffle(obList);
+					MahJong.newGame();
+					
 					
 					for(int i=0; i<obList.size();i++)
 						obList.get(i).setListIndex(i);
