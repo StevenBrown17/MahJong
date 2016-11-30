@@ -16,7 +16,7 @@ public class MahJong extends JFrame implements MouseListener{
 
 	//Image img = Toolkit.getDefaultToolkit().createImage("src/resources/dragon_bg.png");
 	
-	public MahJongBoard.MahJongModel.Tile t1=null,t2=null;
+	public MahJongBoard.MahJongModel.Tile t1= new MahJongBoard.MahJongModel.Tile(),t2= new MahJongBoard.MahJongModel.Tile();
 	
 	public MahJong() {
 		
@@ -91,6 +91,11 @@ public class MahJong extends JFrame implements MouseListener{
 		MahJongBoard.obList.get(index).setVisible(true);
 		MahJongBoard.removedList.remove(size-1);
 		
+		size = MahJongBoard.removedList.size();
+		index = MahJongBoard.removedList.get(size-1).getListIndex();
+		MahJongBoard.obList.get(index).setVisible(true);
+		MahJongBoard.removedList.remove(size-1);
+		
 	}
 	
 	public static void newGame(){
@@ -105,36 +110,23 @@ public class MahJong extends JFrame implements MouseListener{
 		
 		MahJongBoard.MahJongModel.Tile t = (MahJongBoard.MahJongModel.Tile)e.getSource();
 		
-		if(!t.matches(t1))
-			t1=t;
-		
-			t2=t;
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		//System.out.println("Tile Visible: "+ t.tileVisible);
-		
-		if(t1.matches(t2)){
+		t1=t;
+				
+		if(t1.matches(t2) && t1.listIndex != t2.listIndex){
 			t1.setTileVisible(false);//local tile var
 			t2.setTileVisible(false);//local tile var
 			t1.setVisible(false);
 			t2.setVisible(false);
 			System.out.println(t);
-			System.out.println("List Index: " + t.listIndex+"\n");
 			//System.out.println("Tile Visible: "+ t.tileVisible);	
-			MahJongBoard.removedList.add(t);
+			MahJongBoard.removedList.add(t1);
+			MahJongBoard.removedList.add(t2);
 			repaint();
 			t1=null;
-			t2=null;
+			//t2=null;
 		}
 		
+		t2=t;
 		
 	}//end mouse pressed
 	
