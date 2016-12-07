@@ -8,6 +8,12 @@ public class RankTile extends MahJong.MahJongBoard.MahJongModel.Tile{
 		this.rank = rank;
 	}
 	
+	public MahJong.MahJongBoard.MahJongModel.Tile copy(MahJong.MahJongBoard.MahJongModel.Tile t){
+		 MahJong.MahJongBoard.MahJongModel.Tile tile = new  MahJong.MahJongBoard.MahJongModel.Tile();
+		tile = super.copy(t);
+		return tile;
+	}
+	
 	@Override
 	public boolean matches(MahJong.MahJongBoard.MahJongModel.Tile other){
 		 

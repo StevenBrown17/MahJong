@@ -3,6 +3,8 @@ import java.awt.event.*;
 import java.net.URL;
 import java.util.Collections;
 import javax.swing.*;
+import javax.swing.border.Border;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -15,20 +17,22 @@ import javafx.collections.ObservableList;
 public class MahJong extends JFrame implements MouseListener{
 
 	//Image img = Toolkit.getDefaultToolkit().createImage("src/resources/dragon_bg.png");
+	public boolean tournamentMode=false;
 	
-	public MahJongBoard.MahJongModel.Tile t1= new MahJongBoard.MahJongModel.Tile(),t2= new MahJongBoard.MahJongModel.Tile();
+	public MahJongBoard.MahJongModel.Tile t1= new MahJongBoard.MahJongModel.Tile(),t2= new MahJongBoard.MahJongModel.Tile(), usedTile= new MahJongBoard.MahJongModel.Tile();
+	
+	ScrollPane	scrollPane = new ScrollPane();
+	
+	private	Border			selected = BorderFactory.createLineBorder(Color.RED,5);
+	private	JPanel			centerPanel = new JPanel();
+
 	
 	public MahJong() {
 		
-		
-
+		add(centerPanel);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setSize(1200,965);
 		
-
-		
-		
-		
-		setSize(1200,900);
 		JMenuBar menu = new JMenuBar();
 		JMenu file = new JMenu("File");
 		menu.add(file);
@@ -63,11 +67,46 @@ public class MahJong extends JFrame implements MouseListener{
 			}
 		});
 		
+		menu.add(control);
+		
+		
+		ButtonGroup	group = new ButtonGroup();
+		JMenu		tournament = new JMenu("Tournament Mode");
+		tournament.setMnemonic('T');
+		menu.add(tournament);
+
+		JRadioButtonMenuItem	on =
+			new JRadioButtonMenuItem("On");
+		group.add(on);
+		tournament.add(on);
+		on.setAccelerator(KeyStroke.getKeyStroke("ctrl O"));
+		on.addActionListener(new ActionListener()
+				{ public void actionPerformed(ActionEvent e)
+					{ 	tournamentMode=true; 
+						//newGame();
+					}
+				});
+
+		JRadioButtonMenuItem	off =
+			new JRadioButtonMenuItem("Off", true);
+		group.add(off);
+		tournament.add(off);
+		off.setAccelerator(KeyStroke.getKeyStroke("ctrl F"));
+		off.addActionListener(new ActionListener()
+				{ public void actionPerformed(ActionEvent e)
+					{ tournamentMode=false; 
+						//newGame();
+					}
+				});
 
 		
+		
+		
+
 		setJMenuBar(menu);
 		
 		add(new MahJongBoard());
+		add(new ScrollPane(), BorderLayout.SOUTH);
 
 		
 		//pack();	
@@ -84,7 +123,8 @@ public class MahJong extends JFrame implements MouseListener{
 	}//end constructor
 
 	
-	public void undoMove(){
+	public void undoMove(){ //TODO
+		
 		int size = MahJongBoard.removedList.size(), index;
 		
 		index = MahJongBoard.removedList.get(size-1).getListIndex();
@@ -95,6 +135,11 @@ public class MahJong extends JFrame implements MouseListener{
 		index = MahJongBoard.removedList.get(size-1).getListIndex();
 		MahJongBoard.obList.get(index).setVisible(true);
 		MahJongBoard.removedList.remove(size-1);
+		int x =MahJongBoard.obList.get(index).getxLocation(), y = MahJongBoard.obList.get(index).getyLocation();
+		MahJongBoard.obList.get(index).setLocation(x,y);
+		this.getContentPane().getParent().add(MahJongBoard.obList.get(index));
+//		revalidate();
+//		repaint();
 		
 	}
 	
@@ -108,34 +153,60 @@ public class MahJong extends JFrame implements MouseListener{
 	public void mouseExited(MouseEvent e) {}
 	public void mousePressed(MouseEvent e){
 		
-		MahJongBoard.MahJongModel.Tile t = (MahJongBoard.MahJongModel.Tile)e.getSource();
+		t1.setBorder(null);
+		
+		MahJongBoard.MahJongModel.Tile t = (MahJongBoard.MahJongModel.Tile)e.getSource();		
 		
 		t1=t;
-				
+		t1.setBorder(selected);
+		
+		//usedTile =t;
+			
 		if(t1.matches(t2) && t1.listIndex != t2.listIndex){
-			t1.setTileVisible(false);//local tile var
-			t2.setTileVisible(false);//local tile var
-			t1.setVisible(false);
-			t2.setVisible(false);
+			
+			t1.setBorder(null);
+
+
+			//t1.setTileVisible(false);//local tile var
+			//t2.setTileVisible(false);//local tile var
+			//t1.setVisible(false);
+			//t2.setVisible(false);
 			System.out.println(t);
 			//System.out.println("Tile Visible: "+ t.tileVisible);	
 			MahJongBoard.removedList.add(t1);
 			MahJongBoard.removedList.add(t2);
-			repaint();
-			t1=null;
-			//t2=null;
+			
+			int index = t1.getListIndex();
+			
+			ScrollPane.undoStack.push(MahJongBoard.removed.get(index));
+			ScrollPane.discard[0].add(MahJongBoard.removed.get(index));
+			
+			index = t2.getListIndex();
+			ScrollPane.undoStack.push(MahJongBoard.removed.get(index));
+			ScrollPane.discard[1].add(MahJongBoard.removed.get(index));
+			//add(t1);
+			
+
+			revalidate();
+			repaint();	
+			t2 = new MahJongBoard.MahJongModel.Tile();
 		}
-		
-		t2=t;
+		else
+			t2=t;
+			
+
 		
 	}//end mouse pressed
 	
+	private void addComponent(Component c)
+	{
+		centerPanel.add(c);
+	}
 
 	
 		public static void main(String[] args){			
 			
 			new MahJong();
-			
 			
 			
 			
@@ -165,6 +236,9 @@ public class MahJong extends JFrame implements MouseListener{
 		
 		public static ObservableList<MahJongModel.Tile> obList = FXCollections.observableArrayList();
 		public static ObservableList<MahJongModel.Tile> removedList = FXCollections.observableArrayList();
+		public static ObservableList<MahJongModel.Tile> removed;
+		
+
 		
 		public static void addAndShuffle(){
 			obList.clear();
@@ -178,16 +252,17 @@ public class MahJong extends JFrame implements MouseListener{
 			for(int i=0;i<4;i++){obList.add(new Bamboo1Tile()); obList.add(new WhiteDragonTile());}
 		
 			Collections.shuffle(obList);
+			
 		}
 		
 		public MahJongBoard() {	
-			
+
 					setLayout(null);
 										
 									
 					addAndShuffle();
-					
-					MahJong.newGame();
+					removed  = FXCollections.observableArrayList(obList);
+					//MahJong.newGame();
 					
 					
 					for(int i=0; i<obList.size();i++)
@@ -195,7 +270,7 @@ public class MahJong extends JFrame implements MouseListener{
 					
 					//t = new SeasonTile("Spring");
 					//t.setLocation(0,0);
-					int defaultX=175, defaultY=40;
+					int defaultX=175, defaultY=35;
 					int x=defaultX,y=defaultY, width = MahJongModel.Tile.tileWidth, height = MahJongModel.Tile.tileHight, count=0;
 					
 					////BUILD TOP DOWN
@@ -214,9 +289,9 @@ public class MahJong extends JFrame implements MouseListener{
 					
 					x=defaultX+(width*5-20);
 					count = 139;
-					while(count<141){obList.get(count).setLocation(x+(width-10), y+height*3-60); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setxLocation(y+height*3-60); count++;}
+					while(count<141){obList.get(count).setLocation(x+(width-10), y+height*3-60); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*3-60); count++;}
 					x=defaultX+(width*5-20);
-					while(count<143){obList.get(count).setLocation(x+(width-10), y+height*4-70); x=x+(width-10); count++;}
+					while(count<143){obList.get(count).setLocation(x+(width-10), y+height*4-70); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*4-70); count++;}
 
 					for(int i=141;i<143;i++)add(obList.get(i));//ADDING 2x2 ROW2
 					for(int i=139;i<141;i++)add(obList.get(i));//ADDING 2x2 ROW1
@@ -229,13 +304,13 @@ public class MahJong extends JFrame implements MouseListener{
 					
 					x=defaultX+(width*4-20);
 					count = 123;
-					while(count<127){obList.get(count).setLocation(x+(width-10), y+height*2-40); x=x+(width-10); count++;}
+					while(count<127){obList.get(count).setLocation(x+(width-10), y+height*2-40); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*2-40);  count++;}
 					x=defaultX+(width*4-20);
-					while(count<131){obList.get(count).setLocation(x+(width-10), y+height*3-50); x=x+(width-10); count++;}
+					while(count<131){obList.get(count).setLocation(x+(width-10), y+height*3-50); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*3-50); count++;}
 					x=defaultX+(width*4-20);
-					while(count<135){obList.get(count).setLocation(x+(width-10), y+height*4-60); x=x+(width-10); count++;}
+					while(count<135){obList.get(count).setLocation(x+(width-10), y+height*4-60); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*4-60); count++;}
 					x=defaultX+(width*4-20);
-					while(count<139){obList.get(count).setLocation(x+(width-10), y+height*5-70); x=x+(width-10); count++;}
+					while(count<139){obList.get(count).setLocation(x+(width-10), y+height*5-70); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*5-70); count++;}
 					
 					for(int i=135;i<139;i++)add(obList.get(i));//ADDING 4x4 ROW3
 					for(int i=131;i<135;i++)add(obList.get(i));//ADDING 4x4 ROW3
@@ -249,17 +324,17 @@ public class MahJong extends JFrame implements MouseListener{
 						
 					x=defaultX+(width*3-20);
 					count = 87;
-					while(count<93){obList.get(count).setLocation(x+(width-10), y+height-20); x=x+(width-10); count++;}
+					while(count<93){obList.get(count).setLocation(x+(width-10), y+height-20); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height-20); count++;}
 					x=defaultX+(width*3-20);
-					while(count<99){obList.get(count).setLocation(x+(width-10), y+height*2-30); x=x+(width-10); count++;}
+					while(count<99){obList.get(count).setLocation(x+(width-10), y+height*2-30); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*2-30); count++;}
 					x=defaultX+(width*3-20);
-					while(count<105){obList.get(count).setLocation(x+(width-10), y+height*3-40); x=x+(width-10); count++;}
+					while(count<105){obList.get(count).setLocation(x+(width-10), y+height*3-40); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*3-40); count++;}
 					x=defaultX+(width*3-20);
-					while(count<111){obList.get(count).setLocation(x+(width-10), y+height*4-50); x=x+(width-10); count++;}
+					while(count<111){obList.get(count).setLocation(x+(width-10), y+height*4-50); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*4-50); count++;}
 					x=defaultX+(width*3-20);
-					while(count<117){obList.get(count).setLocation(x+(width-10), y+height*5-60); x=x+(width-10); count++;}
+					while(count<117){obList.get(count).setLocation(x+(width-10), y+height*5-60); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*5-60); count++;}
 					x=defaultX+(width*3-20);
-					while(count<123){obList.get(count).setLocation(x+(width-10), y+height*6-70); x=x+(width-10); count++;}
+					while(count<123){obList.get(count).setLocation(x+(width-10), y+height*6-70); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*6-70); count++;}
 					
 					for(int i=117;i<123;i++)add(obList.get(i));//ADDING 6x6 ROW6
 					for(int i=111;i<117;i++)add(obList.get(i));//ADDING 6x6 ROW5
@@ -276,25 +351,25 @@ public class MahJong extends JFrame implements MouseListener{
 					//for(int i=count;i<12;i++){obList.get(i).setLocation(x+(width-10), y); x=x+(width-10); count++;}
 					count=0;
 					x=defaultX;
-					while(count<12){obList.get(count).setLocation(x+(width-10), y); x=x+(width-10); count++;} //BOTTOM ROW 1				
+					while(count<12){obList.get(count).setLocation(x+(width-10), y); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y); count++;} //BOTTOM ROW 1				
 					x=defaultX+(width*2-20);
-					while(count<20){obList.get(count).setLocation(x+(width-10), y+height-10); x=x+(width-10); count++;}//BOTTOM ROW 2				
+					while(count<20){obList.get(count).setLocation(x+(width-10), y+height-10); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height-10); count++;}//BOTTOM ROW 2				
 					x=defaultX+(width-10);
-					while(count<30){obList.get(count).setLocation(x+(width-10), y+(height*2)-20); x=x+(width-10); count++;}//BOTTOM ROW 3
+					while(count<30){obList.get(count).setLocation(x+(width-10), y+(height*2)-20); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+(height*2)-20); count++;}//BOTTOM ROW 3
 					x=defaultX;
-					while(count<42){obList.get(count).setLocation(x+(width-10), y+(height*3)-30); x=x+(width-10); count++;}//BOTTOM ROW 4
+					while(count<42){obList.get(count).setLocation(x+(width-10), y+(height*3)-30); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+(height*3)-30); count++;}//BOTTOM ROW 4
 					x=defaultX;
-					while(count<54){obList.get(count).setLocation(x+(width-10), y+(height*4)-40); x=x+(width-10); count++;}//BOTTOM ROW 5
-					obList.get(count).setLocation(x+width-10, y+(height*3)+5); x=x+(width-10); count++;//RIGHT 2 OFFSET
-					obList.get(count).setLocation(x+width-10, y+(height*3)+5); x=x+(width-10); count++;//LEFT OFFSET		
+					while(count<54){obList.get(count).setLocation(x+(width-10), y+(height*4)-40); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+(height*4)-40); count++;}//BOTTOM ROW 5
+					obList.get(count).setLocation(x+width-10, y+(height*3)+5); x=x+(width-10); obList.get(count).setxLocation(x); count++;//RIGHT 2 OFFSET
+					obList.get(count).setLocation(x+width-10, y+(height*3)+5); x=x+(width-10); obList.get(count).setxLocation(x); count++;//LEFT OFFSET		
 					x=defaultX;
-					obList.get(count).setLocation(x, y+(height*3)+5); x=x+(width-10); count++;
+					obList.get(count).setLocation(x, y+(height*3)+5); x=x+(width-10); obList.get(count).setxLocation(x); count++;
 					x=defaultX+(width-10);
-					while(count<67){obList.get(count).setLocation(x+(width-10), y+(height*5)-50); x=x+(width-10); count++;}//BOTTOM ROW 6
+					while(count<67){obList.get(count).setLocation(x+(width-10), y+(height*5)-50); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+(height*5)-50); count++;}//BOTTOM ROW 6
 					x=defaultX+(width*2-20);
-					while(count<75){obList.get(count).setLocation(x+(width-10), y+height*6-60); x=x+(width-10); count++;}//BOTTOM ROW 7
+					while(count<75){obList.get(count).setLocation(x+(width-10), y+height*6-60); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*6-60); count++;}//BOTTOM ROW 7
 					x=defaultX;
-					while(count<87){obList.get(count).setLocation(x+(width-10), y+height*7-70); x=x+(width-10); count++;} //BOTTOM ROW 8
+					while(count<87){obList.get(count).setLocation(x+(width-10), y+height*7-70); x=x+(width-10); obList.get(count).setxLocation(x); obList.get(count).setyLocation(y+height*7-70); count++;} //BOTTOM ROW 8
 					
 					for(int i=75;i<87;i++)add(obList.get(i));//ADDING BOTTOM ROW					
 					for(int i=67; i<75;i++)add(obList.get(i));					
@@ -311,6 +386,7 @@ public class MahJong extends JFrame implements MouseListener{
 			
 			setVisible(true);
 		}//end Board constructor
+		
 		
 		
 		public void paintComponent(Graphics g){
@@ -338,7 +414,7 @@ public class MahJong extends JFrame implements MouseListener{
 			
 			public static class Tile extends JPanel{
 				
-				int xLocation, yLocation,listIndex;
+				int xLocation, yLocation, listIndex;
 				public int getListIndex() {
 					return listIndex;
 				}
@@ -350,9 +426,7 @@ public class MahJong extends JFrame implements MouseListener{
 
 
 				boolean tileVisible=true;
-				
-				
-			
+
 
 				public static int[] left1x = 	{5,10,10,5};
 				public static int[] left1y = 	{10,0,80,85};
@@ -399,6 +473,7 @@ public class MahJong extends JFrame implements MouseListener{
 				}
 				
 
+				
 					public int getxLocation() {
 					return xLocation;
 				}
@@ -476,6 +551,15 @@ public class MahJong extends JFrame implements MouseListener{
 					else
 						return false;
 				}//end matches
+				
+				
+				public Tile copy(Tile t){
+
+					Tile tile = new  Tile();
+					tile = t;
+					tile.setTileVisible(true);
+					return tile;
+				}
 
 				
 			}//end tile class

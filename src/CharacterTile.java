@@ -1,6 +1,7 @@
 import java.awt.*;
 //import javax.swing.*;
 
+
 @SuppressWarnings("serial")
 public class CharacterTile extends MahJong.MahJongBoard.MahJongModel.Tile{
 	
@@ -133,7 +134,11 @@ public class CharacterTile extends MahJong.MahJongBoard.MahJongModel.Tile{
 	
 	
 
-	
+		public MahJong.MahJongBoard.MahJongModel.Tile copy(MahJong.MahJongBoard.MahJongModel.Tile t){
+			 MahJong.MahJongBoard.MahJongModel.Tile tile = new  MahJong.MahJongBoard.MahJongModel.Tile();
+			tile = super.copy(t);
+			return tile;
+		}
 	
 	
 	@Override
