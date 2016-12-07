@@ -6,10 +6,10 @@ import	javax.swing.*;
 
 public class ScrollPane extends JScrollPane
 {
-	private	static	Dimension	size = new Dimension(MahJong.MahJongBoard.MahJongModel.Tile.tileWidth,MahJong.MahJongBoard.MahJongModel.Tile.tileHight);
+	//private	static	Dimension	size = new Dimension(MahJong.MahJongBoard.MahJongModel.Tile.tileWidth,MahJong.MahJongBoard.MahJongModel.Tile.tileHight);
 
 	public static	JPanel[]	discard = new JPanel[2];
-	public static	Stack<MahJong.MahJongBoard.MahJongModel.Tile>	undoStack = new Stack<MahJong.MahJongBoard.MahJongModel.Tile>();
+	//public static	Stack<MahJong.MahJongBoard.MahJongModel.Tile>	undoStack = new Stack<MahJong.MahJongBoard.MahJongModel.Tile>();
 	//private	Stack<Tile>	redoStack = new Stack<Tile>();		// optional
 	public static		int		width = MahJong.MahJongBoard.MahJongModel.Tile.tileWidth + 6;
 	public static		int		height = MahJong.MahJongBoard.MahJongModel.Tile.tileHight;
