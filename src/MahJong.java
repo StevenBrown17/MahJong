@@ -6,8 +6,13 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Random;
+
 import javax.swing.*;
 import javax.swing.border.Border;
+
+import com.sun.javafx.image.impl.ByteIndexed.Getter;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
@@ -21,7 +26,9 @@ public class MahJong extends JFrame implements MouseListener{
 
 	//Image img = Toolkit.getDefaultToolkit().createImage("src/resources/dragon_bg.png");
 	public boolean tournamentMode=false;
-	
+	public boolean soundBool=true;
+	public static boolean beginning=true;
+	public static MouseListener mouseArray[];
 	public MahJongBoard.MahJongModel.Tile t1= new MahJongBoard.MahJongModel.Tile(),t2= new MahJongBoard.MahJongModel.Tile(), usedTile= new MahJongBoard.MahJongModel.Tile();
 	
 	ScrollPane	scrollPane = new ScrollPane();
@@ -37,17 +44,22 @@ public class MahJong extends JFrame implements MouseListener{
 		setSize(1200,965);
 		
 		JMenuBar menu = new JMenuBar();
-		JMenu file = new JMenu("File");
-		menu.add(file);
-		JMenuItem exit = new JMenuItem("Exit");
-	
-		file.add(exit);
 		
-		JMenu control = new JMenu("Control");
-		menu.add(control);
+		
+		///////////////////////////////////////////////////////////////////////Game menu
+		JMenu game = new JMenu("File");
+		menu.add(game);
+		JMenuItem exit = new JMenuItem("Exit");
+		exit.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
+		exit.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				System.exit(0);
+			}
+		});
+		game.add(exit);
 		
 		JMenuItem newGame = new JMenuItem("New Game", 'N');
-		control.add(newGame);
+		game.add(newGame);
 		newGame.setAccelerator(KeyStroke.getKeyStroke("ctrl N"));
 		newGame.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -58,9 +70,27 @@ public class MahJong extends JFrame implements MouseListener{
 				repaint();
 			}
 		});
+		game.add(newGame);
+		
+		JMenuItem restart = new JMenuItem("Restart");
+		restart.setAccelerator(KeyStroke.getKeyStroke("ctrl R"));
+		restart.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				for(int i=0; i<MahJongBoard.removedList.size();i++){
+					try{
+						undoMove();
+					}catch(ArrayIndexOutOfBoundsException ex){System.out.println("no moves to undo");}	
+				}//end for		
+			}
+		});
+		game.add(restart);
+		
+		///////////////////////////////////////////////////Move Menu
+		JMenu move = new JMenu("Move");
+		menu.add(move);
 		
 		JMenuItem undo = new JMenuItem("Undo", 'U');
-		control.add(undo);	
+		move.add(undo);	
 		undo.setAccelerator(KeyStroke.getKeyStroke("ctrl Z"));
 		undo.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -73,9 +103,38 @@ public class MahJong extends JFrame implements MouseListener{
 			}
 		});
 		
-		menu.add(control);
+		move.add(undo);
+		//////////////////////////////////////////////////////SOund Menu
+		ButtonGroup	soundGroup = new ButtonGroup();
+		JMenu		sound = new JMenu("Sound");
+		sound.setMnemonic('S');
+		menu.add(sound);
+
+		JRadioButtonMenuItem	soundOn =
+			new JRadioButtonMenuItem("On",true);
+		soundGroup.add(soundOn);
+		sound.add(soundOn);
+		//soundOn.setAccelerator(KeyStroke.getKeyStroke("ctrl "));
+		soundOn.addActionListener(new ActionListener()
+				{ public void actionPerformed(ActionEvent e)
+					{ 	soundBool=true; 
+
+					}
+				});
+
+		JRadioButtonMenuItem	soundOff =
+			new JRadioButtonMenuItem("Off");
+		soundGroup.add(soundOff);
+		sound.add(soundOff);
+		soundOff.setAccelerator(KeyStroke.getKeyStroke("ctrl F"));
+		soundOff.addActionListener(new ActionListener()
+				{ public void actionPerformed(ActionEvent e){ 
+					soundBool=false; 
+					}
+				});
 		
 		
+		//////////////////////////////////////////////////////////////Tournament
 		ButtonGroup	group = new ButtonGroup();
 		JMenu		tournament = new JMenu("Tournament Mode");
 		tournament.setMnemonic('T');
@@ -104,29 +163,34 @@ public class MahJong extends JFrame implements MouseListener{
 						//newGame();
 					}
 				});
-
+////////////////////////////////////////////////////////////////////////////
 		
-		
-		
-
 		setJMenuBar(menu);
-		
 		add(new MahJongBoard());
-		add(new ScrollPane(), BorderLayout.SOUTH);
+		beginning = false;
+		
+		ScrollPane start = new ScrollPane();
+		
+		add(start, BorderLayout.SOUTH);
 
 		
 		//pack();	
 	
 		for(int i=0;i<MahJongBoard.obList.size();i++){
-			MahJongBoard.obList.get(i).addMouseListener(this); 
+			MahJongBoard.obList.get(i).addMouseListener(this);
 		}
-				
+		
+		
+		
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setLocation((int)(screenSize.getWidth()-getWidth())/2, (int)(screenSize.getHeight() - getHeight())/2);
 		
 		setVisible(true);
 		
 	}//end constructor
+	
+	
+	
 	private void tournamentAlert(){
 		JOptionPane.showMessageDialog(this, "Cannot UNDO in tournament mode!");
 	}
@@ -136,7 +200,7 @@ public class MahJong extends JFrame implements MouseListener{
 		newGame();
 	}
 	
-	public void undoMove(){ //TODO
+	public void undoMove(){ 
 		
 		ScrollPane.discard[0].removeAll();
 		ScrollPane.discard[0].repaint();
@@ -160,14 +224,25 @@ public class MahJong extends JFrame implements MouseListener{
 		ScrollPane.discard[0].add(MahJongBoard.removed.get(index),0);	
 		ScrollPane.discard[1].add(MahJongBoard.removed.get(index),0);
 		
-		
 		revalidate();
 		repaint();
 
 	}
 	
-	public static void newGame(){
-		MahJongBoard.addAndShuffle();
+	public void newGame(){
+		MahJongBoard.removed.clear();
+		new MahJongBoard();
+		
+
+		MahJongBoard.removedList.clear();
+		
+		
+		add(new ScrollPane(), BorderLayout.SOUTH);
+	
+		ScrollPane.discard[0].removeAll();
+		ScrollPane.discard[0].repaint();
+		ScrollPane.discard[1].removeAll();
+		ScrollPane.discard[1].repaint();
 	}
 	
 	public void mouseReleased(MouseEvent e) {}
@@ -218,6 +293,9 @@ public class MahJong extends JFrame implements MouseListener{
 				revalidate();
 				repaint();	
 				t2 = new MahJongBoard.MahJongModel.Tile();
+				
+				if(soundBool)
+					PlayClip.playClip();
 				
 				if(MahJongBoard.removedList.size()==144)
 					winMessage();
@@ -288,23 +366,33 @@ public class MahJong extends JFrame implements MouseListener{
 		
 		
 		public static ObservableList<MahJongModel.Tile> obList = FXCollections.observableArrayList();
+		public static ObservableList<MahJongModel.Tile> original = FXCollections.observableArrayList();
 		public static ObservableList<MahJongModel.Tile> removedList = FXCollections.observableArrayList();
 		public static ObservableList<MahJongModel.Tile> removed = FXCollections.observableArrayList();
 		
 
 		
 		public static void addAndShuffle(){
-			obList.clear();
-			removedList.clear();
+
+			if(beginning){
+				for(int i=0; i<seasons.length;i++){obList.add(new SeasonTile(seasons[i]));}//adding tile objects to observable list
+				for(int i=0; i<flowers.length;i++){obList.add(new FlowerTile(flowers[i]));}
+				for(int i=0; i<circles.length;i++){obList.add(new CircleTile(circles[i]));}
+				for(int i=0; i<characters.length;i++){obList.add(new CharacterTile(characters[i]));}
+				for(int i=0; i<bamboo.length;i++){obList.add(new BambooTile(bamboo[i]));}
+				for(int i=0;i<4;i++){obList.add(new Bamboo1Tile()); obList.add(new WhiteDragonTile());}
+				
+				for(int i=0; i< obList.size();i++){original.add(obList.get(i));}	
+			}
+			else
+				obList = original;
 			
-			for(int i=0; i<seasons.length;i++){obList.add(new SeasonTile(seasons[i]));}//adding tile objects to observable list
-			for(int i=0; i<flowers.length;i++){obList.add(new FlowerTile(flowers[i]));}
-			for(int i=0; i<circles.length;i++){obList.add(new CircleTile(circles[i]));}
-			for(int i=0; i<characters.length;i++){obList.add(new CharacterTile(characters[i]));}
-			for(int i=0; i<bamboo.length;i++){obList.add(new BambooTile(bamboo[i]));}
-			for(int i=0;i<4;i++){obList.add(new Bamboo1Tile()); obList.add(new WhiteDragonTile());}
-		
-			Collections.shuffle(obList);
+			Random rand = new Random();
+			
+			rand.setSeed(500);
+			System.out.println(rand.nextInt());
+			Collections.shuffle(obList, rand);
+
 			
 		}
 		
@@ -352,9 +440,7 @@ public class MahJong extends JFrame implements MouseListener{
 										
 									
 					addAndShuffle();
-					
-					//MahJong.newGame();
-					
+										
 					
 					for(int i=0; i<obList.size();i++)
 						obList.get(i).setListIndex(i);
@@ -495,15 +581,6 @@ public class MahJong extends JFrame implements MouseListener{
 						}
 						
 						removed.add(tile);
-						
-//						boolean bool;
-//						if(removed.get(i) == obList.get(i))bool=true;
-//						else bool=false;
-//						System.out.println(bool);
-//						
-//						if(removed.get(i).equals(obList.get(i)))bool=true;
-//						else bool=false;
-//						System.out.println(bool);
 					}//end for
 					
 					
