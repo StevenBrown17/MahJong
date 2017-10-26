@@ -180,6 +180,9 @@ public class CharacterTile extends MahJong.MahJongBoard.MahJongModel.Tile{
 		}
 	}//end toString
 	
+	
+	//main to test functionality
+	
 //	public static void main(String[] args)
 //	{
 //		JFrame		frame = new JFrame();

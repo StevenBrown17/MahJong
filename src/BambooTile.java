@@ -181,7 +181,7 @@ public void smaller(Graphics g){
 	
 	
 	
-//
+////main to test functionality
 //	
 //	public static void main(String[] args)
 //	{

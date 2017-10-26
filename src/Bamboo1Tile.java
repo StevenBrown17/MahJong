@@ -37,7 +37,7 @@ public class Bamboo1Tile extends PictureTile
 		g.drawImage(bamboo1.getImage(), 15, 20,(int)(bamboo1.getIconWidth()*0.75),(int)(bamboo1.getIconHeight()*0.75), this);
 	}
 	
-	
+	//main to test functionality
 //	public static void main(String[] args)
 //	{
 //		JFrame	frame = new JFrame();

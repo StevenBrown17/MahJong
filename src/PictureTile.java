@@ -18,6 +18,7 @@ public class PictureTile extends MahJong.MahJongBoard.MahJongModel.Tile{
 		return name;
 	}
 	
+	//main to test functionality
 //	public static void main(String[] args)
 //	{
 //		JFrame	frame = new JFrame();
